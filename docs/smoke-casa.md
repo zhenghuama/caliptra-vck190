@@ -39,6 +39,9 @@ dependencies, matching kernel headers, and the working Caliptra FPGA image.
 At least 3 GiB of free board storage is required before a run. Adding new
 dependencies still requires an offline dependency handoff; the target does
 not install tools, provide Internet access, or reflash/reboot the board.
+Changes to RTL or the FPGA design still require a separate FPGA image build and
+deployment. Synchronizing an RTL file does not change the design already loaded
+in the PL; this target runs software/firmware against the current FPGA image.
 
 The first run in the dedicated build directory can take substantially longer.
 Later runs reuse the board's persistent native build cache. A failed source
