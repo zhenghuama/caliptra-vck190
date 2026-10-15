@@ -217,7 +217,7 @@ print(p.pid)
             synced = False
             setup_sent = False
             last_notice = 0
-            deadline = time.monotonic() + 2700
+            deadline = time.monotonic() + 4500
             while time.monotonic() < deadline:
                 status = get_state(board, remote)
                 phase = status.get('phase', 'starting')

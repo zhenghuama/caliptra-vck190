@@ -154,6 +154,7 @@ def worker(run_id):
             # No host-side dependency proxy or credentials are passed to the board.
             env.update(CALIPTRA_SRC=str(source), CALIPTRA_LOG_DIR=str(run / 'test'),
                        CARGO_TARGET_DIR=str(base / 'target'), CARGO_NET_OFFLINE='true',
+                       CALIPTRA_TEST_TIMEOUT='60m',
                        CALIPTRA_LOCK_FD=str(lock.fileno()))
             started = time.monotonic_ns()
             state('running', started_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))

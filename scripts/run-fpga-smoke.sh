@@ -43,7 +43,9 @@ export CARGO_NET_GIT_FETCH_WITH_CLI=true
 export CARGO_NET_OFFLINE=${CARGO_NET_OFFLINE:-true}
 out="$logdir/smoke-$(date -u +%Y%m%dT%H%M%SZ)-$$"
 printf '%s\n' "$out" >"$logdir/latest-smoke-prefix"
-timeout --signal=TERM --kill-after=15s 30m cargo test --locked \
+test_timeout=${CALIPTRA_TEST_TIMEOUT:-30m}
+[[ "$test_timeout" =~ ^[1-9][0-9]*[smh]$ ]] || { echo 'Invalid test timeout; use a positive integer followed by s, m, or h.' >&2; exit 2; }
+timeout --signal=TERM --kill-after=15s "$test_timeout" cargo test --locked \
     --features=fpga_realtime,itrng,slow_tests -p caliptra-test \
     --test caliptra_integration_tests smoke_test::smoke_test \
     -- --exact --nocapture 2>&1 | tee "$out.log"

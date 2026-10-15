@@ -87,7 +87,9 @@ benchmarks. SSH/file-transfer time is excluded from both.
 
 The board writes logs locally and the worker survives an SSH disconnect. If
 casa loses its connection, or you interrupt waiting after execution starts,
-the test can continue on the board up to the launcher's 30-minute timeout.
+the test can continue on the board up to the workflow's 60-minute timeout.
+This allows for both native and firmware compilation on the first run; the
+standalone launcher retains its default 30-minute timeout.
 The run ID is printed at startup. Retrieve its status and logs later with:
 
 ```bash
