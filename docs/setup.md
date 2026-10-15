@@ -90,10 +90,14 @@ destinations only. It is not a general Internet gateway. Stop the proxy and SSH
 tunnel after downloads, and unset the proxy variables. A new destination may
 need a reviewed allowlist addition.
 
-Use `scripts/prepare-source.sh "$HOME/caliptra-sw"` on a new board to retrieve
-the pinned source, initialize nested submodules, and apply the recorded FPGA
-changes. It refuses to overwrite an existing directory. The existing lab board
-already has its prepared source and cached dependencies.
+Normally run `scripts/prepare-source.sh` on casa, which has Internet access,
+and transfer the prepared source to a new directory on the board as described
+in [the offline workflow](offline-workflow.md). Alternatively, on a new board
+with the temporary proxy configured, run
+`scripts/prepare-source.sh "$HOME/caliptra-sw"` to retrieve the pinned source,
+initialize nested submodules, and apply the recorded FPGA changes. The script
+refuses to overwrite an existing directory. The existing lab board already has
+its prepared source and cached dependencies.
 
 ## Caliptra boot file and device-tree correction
 

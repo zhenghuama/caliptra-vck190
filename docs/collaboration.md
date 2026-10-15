@@ -25,6 +25,9 @@ Use one creation route, not both. See the
 
 ## Collaborator workflow
 
+Run these commands on **casa or another workstation with Internet access**.
+The VCK190 is the execution target; [transfer updates over the direct SSH link](offline-workflow.md).
+
 ```bash
 git clone https://github.com/zhenghuama/caliptra-vck190.git
 cd caliptra-vck190

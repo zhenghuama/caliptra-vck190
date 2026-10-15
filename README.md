@@ -13,6 +13,7 @@ The targeted physical FPGA smoke test passed on 2026-10-15 UTC: **1 passed,
 
 - [Access the board, understand the architecture, and run the test](docs/usage.md)
 - [Set up a board from the Ubuntu and Caliptra images](docs/setup.md)
+- [Transfer updates to the board without Internet access](docs/offline-workflow.md)
 - [Publish, collaborate, and add optional private repositories](docs/collaboration.md)
 
 This repository contains setup instructions, a source bootstrap, the smoke-test
@@ -33,6 +34,10 @@ is the tracked source of those changes. The upstream submodule stays clean.
 ```bash
 ./scripts/prepare-source.sh
 ```
+
+Run source preparation on **casa or another Internet-connected workstation**.
+The VCK190 uses source/scripts transferred over its direct SSH link; it does not
+need direct GitHub access. See the offline workflow above.
 
 The script refuses an existing destination. It does not change a working board,
 flash anything, or start an FPGA build. It needs Internet access to GitHub.

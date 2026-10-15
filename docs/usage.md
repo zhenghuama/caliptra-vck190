@@ -61,8 +61,9 @@ For the existing lab installation, its original, tested launcher is:
 ~/caliptra-deploy-20261014/run-fpga-smoke.sh
 ```
 
-For a clone of this infrastructure repo on the board, use its parameterized
-launcher instead:
+For an offline clone of this infrastructure repo on the board (transferred via
+casa as described in [the offline workflow](offline-workflow.md)), use its
+parameterized launcher instead:
 
 ```bash
 CALIPTRA_SRC="$HOME/caliptra-sw" ./scripts/run-fpga-smoke.sh
