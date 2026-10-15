@@ -2,6 +2,52 @@
 
 Validation date: 2026-10-15 UTC (2026-10-14 in the lab's local time).
 
+## Casa orchestration
+
+`make smoke-casa` completed on the physical VCK190 using a newly created,
+dedicated source mirror and build cache. The board remained offline. The
+23,410-file source snapshot included the pinned Caliptra commit and all 18
+nested submodules; its tree SHA-256 was
+`c4fd1eb02bc31cf9ec07f3dcf4987ff7fc2456cb7ac369ba3ec19216c765b271`.
+
+| Run | Result | Board launcher time | Rust test time |
+| --- | --- | --- | --- |
+| `20261015T060933Z-f50cc27c` (cold cache) | 1 passed, 0 failed; exit 0 | 1716.01 s | 834.53 s |
+| `20261015T063931Z-eee8612a` (repeat) | 1 passed, 0 failed; exit 0 | 189.01 s | 116.83 s |
+
+The cold run included 14m 41s of native compilation before the test. Firmware
+compilation also contributes to the Rust test time. Neither timing includes
+SSH, source transfer, or result collection. These are functional-test timings,
+not isolated Caliptra performance measurements.
+
+Both runs reported four FPGA revisions of `61a20816` and four Caliptra
+runtime boots. Results were automatically returned to casa, including the exact
+source manifest, launcher copies, console/test logs, status, and health records.
+The cold-run console SHA-256 is
+`44900c23d0d6f05dc141662ae57c26a726446cd2450f603b5c5db9bd77198f22`.
+The cold run used the working implementation before its first commit; the
+retained manifest records the exact launcher hashes and dirty state.
+The repeat used clean infrastructure commit
+`f09e09aac32bd75c8fffeae92b2f6a4064c622e2`; all three launcher hashes matched
+the committed scripts. Its console SHA-256 is
+`61e8e5d55c906acc936e088e8fb476bf9a3f0d2ec09f2d74370f769c32967ea0`.
+The repeat reused the persistent cache; native compilation took 1m 11s.
+
+A concurrent board-worker request returned exit 75 before source sync was
+allowed. Retrieving an incomplete run returned its partial logs and nonzero
+status without restarting the test. Retrieving the completed cold run returned
+PASS and exit 0 without rerunning it. Five infrastructure tests passed, covering
+source snapshot fidelity, ignored build-cache exclusion, tamper detection,
+wrong-board rejection, lock contention, optional sensor failure, and rejection
+of zero-test/nonzero-exit results.
+
+The board boot ID was unchanged, no systemd services failed, and the collected
+kernel log contained no soft lockup, RCU stall, SD removal, I/O, or ext4 error
+matches. The thermal sensor returned `EINVAL`; the health record explicitly
+marks it unavailable. No reboot or FPGA image replacement was performed.
+Automatic sudo setup after a reboot remains untested in this validation because
+the Caliptra UIO module and CPU-idle settings were already configured.
+
 ## Public repository verification
 
 The newly packaged `scripts/run-fpga-smoke.sh` was run on the existing VCK190
