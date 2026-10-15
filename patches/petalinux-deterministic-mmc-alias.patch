@@ -1,0 +1,22 @@
+--- a/petalinux_project/project-spec/meta-user/recipes-bsp/device-tree/files/system-user.dtsi
++++ b/petalinux_project/project-spec/meta-user/recipes-bsp/device-tree/files/system-user.dtsi
+@@ -1,5 +1,8 @@
+ /include/ "system-conf.dtsi"
+ / {
++    aliases {
++        mmc0 = &sdhci1;
++    };
+ };
+ 
+ /* AMD 2024.2 VCK190 rev1.1 inherits these phases from VMK180 rev1.1.
+--- a/petalinux_project/project-spec/meta-user/meta-xilinx-tools/recipes-bsp/uboot-device-tree/files/system-user.dtsi
++++ b/petalinux_project/project-spec/meta-user/meta-xilinx-tools/recipes-bsp/uboot-device-tree/files/system-user.dtsi
+@@ -1,5 +1,8 @@
+ /include/ "system-conf.dtsi"
+ / {
++    aliases {
++        mmc0 = &sdhci1;
++    };
+ };
+ 
+ /* AMD 2024.2 VCK190 rev1.1 inherits these phases from VMK180 rev1.1.

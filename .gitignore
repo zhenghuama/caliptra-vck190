@@ -1,0 +1,17 @@
+/work/
+/logs/
+/artifacts/
+/.env
+/.env.local
+/.vscode/
+__pycache__/
+*.log
+*.bin
+*.pdi
+*.xsa
+*.img
+*.img.xz
+*.tar.gz
+*.jou
+*.str
+*.lic

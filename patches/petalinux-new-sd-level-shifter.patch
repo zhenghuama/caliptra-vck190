@@ -1,0 +1,34 @@
+--- a/petalinux_project/project-spec/meta-user/recipes-bsp/device-tree/files/system-user.dtsi
++++ b/petalinux_project/project-spec/meta-user/recipes-bsp/device-tree/files/system-user.dtsi
+@@ -1,3 +1,14 @@
+ /include/ "system-conf.dtsi"
+ / {
+ };
++
++/* AMD 2024.2 VCK190 rev1.1 inherits these phases from VMK180 rev1.1.
++ * New SD shifter: SD_HS 111/48 -> ITAP 0x25 / OTAP 4;
++ * DDR50 126/36 -> ITAP 0x2A / OTAP 3.
++ */
++&sdhci1 {
++    no-1-8-v;
++    clk-phase-sd-hs = <111 48>;
++    clk-phase-uhs-sdr25 = <114 48>;
++    clk-phase-uhs-ddr50 = <126 36>;
++};
+--- a/petalinux_project/project-spec/meta-user/meta-xilinx-tools/recipes-bsp/uboot-device-tree/files/system-user.dtsi
++++ b/petalinux_project/project-spec/meta-user/meta-xilinx-tools/recipes-bsp/uboot-device-tree/files/system-user.dtsi
+@@ -1,3 +1,14 @@
+ /include/ "system-conf.dtsi"
+ / {
+ };
++
++/* AMD 2024.2 VCK190 rev1.1 inherits these phases from VMK180 rev1.1.
++ * New SD shifter: SD_HS 111/48 -> ITAP 0x25 / OTAP 4;
++ * DDR50 126/36 -> ITAP 0x2A / OTAP 3.
++ */
++&sdhci1 {
++    no-1-8-v;
++    clk-phase-sd-hs = <111 48>;
++    clk-phase-uhs-sdr25 = <114 48>;
++    clk-phase-uhs-ddr50 = <126 36>;
++};

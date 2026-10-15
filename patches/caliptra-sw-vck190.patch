@@ -1,0 +1,214 @@
+diff --git a/hw/fpga/create_caliptra_package.tcl b/hw/fpga/create_caliptra_package.tcl
+index 79ec74ce..e14092fe 100644
+--- a/hw/fpga/create_caliptra_package.tcl
++++ b/hw/fpga/create_caliptra_package.tcl
+@@ -3,7 +3,7 @@
+ # Packaging Caliptra allows Vivado to recognize Caliptra as an endpoint for the memory map.
+ create_project caliptra_package_project $outputDir -part $PART
+ if {$BOARD eq "VCK190"} {
+-  set_property board_part xilinx.com:vck190:part0:3.1 [current_project]
++  set_property board_part $BOARD_PART [current_project]
+ }
+ 
+ set_property verilog_define $VERILOG_OPTIONS [current_fileset]
+diff --git a/hw/fpga/create_versal_cips.tcl b/hw/fpga/create_versal_cips.tcl
+index 2ba36af7..d8db241d 100644
+--- a/hw/fpga/create_versal_cips.tcl
++++ b/hw/fpga/create_versal_cips.tcl
+@@ -27,6 +27,18 @@ set_property -dict [ list \
+   ] $ddr4_dimm1_sma_clk
+ 
+ create_bd_cell -type ip -vlnv xilinx.com:ip:versal_cips ps_0
++# Keep the original board defaults unless the newer VCK190 SD interface is selected.
++# Values match AMD's vck190_newl preset and CIPS SD_AutoDir reference design.
++set sd1_data_transfer_mode {8Bit}
++set sd1_slot_type {SD 3.0}
++set sd1_ddr_itap 0x36
++set sd1_sdr_itap 0x2C
++if {[info exists VCK190_NEW_SD_LEVEL_SHIFTER] && $VCK190_NEW_SD_LEVEL_SHIFTER} {
++  set sd1_data_transfer_mode {4Bit autodir}
++  set sd1_slot_type {SD 3.0 AUTODIR}
++  set sd1_ddr_itap 0x2A
++  set sd1_sdr_itap 0x25
++}
+ set_property -dict [list \
+   CONFIG.DDR_MEMORY_MODE {Custom} \
+   CONFIG.DEBUG_MODE {JTAG} \
+@@ -52,9 +64,9 @@ set_property CONFIG.PS_PMC_CONFIG [list \
+     PMC_REF_CLK_FREQMHZ {33.3333} \
+     PMC_SD1 {{CD_ENABLE 1} {CD_IO {PMC_MIO 28}} {POW_ENABLE 1} {POW_IO {PMC_MIO 51}} {RESET_ENABLE 0} {RESET_IO {PMC_MIO 12}} {WP_ENABLE 0} {WP_IO {PMC_MIO 1}}} \
+     PMC_SD1_COHERENCY {0} \
+-    PMC_SD1_DATA_TRANSFER_MODE {8Bit} \
+-    PMC_SD1_PERIPHERAL {{CLK_100_SDR_OTAP_DLY 0x3} {CLK_200_SDR_OTAP_DLY 0x2} {CLK_50_DDR_ITAP_DLY 0x36} {CLK_50_DDR_OTAP_DLY 0x3} {CLK_50_SDR_ITAP_DLY 0x2C} {CLK_50_SDR_OTAP_DLY 0x4} {ENABLE 1} {IO {PMC_MIO 26 .. 36}}} \
+-    PMC_SD1_SLOT_TYPE {SD 3.0} \
++    PMC_SD1_DATA_TRANSFER_MODE $sd1_data_transfer_mode \
++    PMC_SD1_PERIPHERAL [list [list CLK_100_SDR_OTAP_DLY 0x3] [list CLK_200_SDR_OTAP_DLY 0x2] [list CLK_50_DDR_ITAP_DLY $sd1_ddr_itap] [list CLK_50_DDR_OTAP_DLY 0x3] [list CLK_50_SDR_ITAP_DLY $sd1_sdr_itap] [list CLK_50_SDR_OTAP_DLY 0x4] [list ENABLE 1] [list IO {PMC_MIO 26 .. 36}]] \
++    PMC_SD1_SLOT_TYPE $sd1_slot_type \
+     PMC_USE_PMC_NOC_AXI0 {1} \
+     PS_CAN1_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 40 .. 41}}} \
+     PS_CRL_CAN1_REF_CTRL_FREQMHZ {160} \
+diff --git a/hw/fpga/fpga_configuration.tcl b/hw/fpga/fpga_configuration.tcl
+index 207e6bda..25e6cfb0 100644
+--- a/hw/fpga/fpga_configuration.tcl
++++ b/hw/fpga/fpga_configuration.tcl
+@@ -8,6 +8,9 @@ set ITRNG TRUE
+ set CG_EN FALSE
+ set RTL_VERSION latest
+ set BOARD VCK190
++set VCK190_NEW_SD_LEVEL_SHIFTER FALSE
++set JOBS 32
++set THREADS 8
+ set ITRNG TRUE
+ set CORE_CLK_MHZ 18
+ # Xilinx core requires 100 - 300MHz. Actual clock usually rounds down
+@@ -22,6 +25,43 @@ foreach arg $argv {
+   regexp {(.*)=(.*)} $arg fullmatch option value
+   set $option "$value"
+ }
++if {![string is boolean -strict $VCK190_NEW_SD_LEVEL_SHIFTER]} {
++  error "VCK190_NEW_SD_LEVEL_SHIFTER must be TRUE or FALSE"
++}
++if {![string is integer -strict $JOBS] || $JOBS < 1} {
++  error "JOBS must be a positive integer"
++}
++if {![string is integer -strict $THREADS] || $THREADS < 1 || $THREADS > 8} {
++  error "THREADS must be an integer from 1 to 8"
++}
++if {$VCK190_NEW_SD_LEVEL_SHIFTER && $BOARD ne "VCK190"} {
++  error "VCK190_NEW_SD_LEVEL_SHIFTER requires BOARD=VCK190"
++}
++if {$BOARD eq "VCK190"} {
++  set PART xcvc1902-vsva2197-2MP-e-S
++  if {$VCK190_NEW_SD_LEVEL_SHIFTER} {
++    # Board revisions differ between tool releases (2024.2 ships 1.2).
++    set newl_board_parts [lsort -dictionary [get_board_parts -quiet xilinx.com:vck190_newl:part0:*]]
++    if {[llength $newl_board_parts] == 0} {
++      error "The VCK190 new-SD board definition is not installed"
++    }
++    set BOARD_PART [lindex $newl_board_parts end]
++  } else {
++    set BOARD_PART xilinx.com:vck190:part0:3.1
++  }
++} elseif {$BOARD eq "VMK180"} {
++  set PART xcvm1802-vsva2197-2MP-e-S
++  set BOARD_PART xilinx.com:vmk180:part0:3.1
++} else {
++  error "Board $BOARD not supported"
++}
++# Check prerequisites before removing an existing output directory.
++if {[llength [get_parts $PART]] == 0} {
++  error "Device support for $PART is not installed; add the matching Versal device support to Vivado"
++}
++if {[llength [get_board_parts $BOARD_PART]] == 0} {
++  error "Board definition $BOARD_PART is not installed"
++}
+ # If VERSION was not set by tclargs, set it from the commit ID.
+ # This assumes it is run from within caliptra-sw. If building from outside caliptra-sw call with "VERSION=[hex number]"
+ if {[info exists VERSION] == 0} {
+@@ -69,17 +109,6 @@ if {$GUI} {
+   start_gui
+ }
+ 
+-if {$BOARD eq "VCK190"} {
+-  set PART xcvc1902-vsva2197-2MP-e-S
+-  set BOARD_PART xilinx.com:vck190:part0:3.1
+-} elseif {$BOARD eq "VMK180"} {
+-  set PART xcvm1802-vsva2197-2MP-e-S
+-  set BOARD_PART xilinx.com:vmk180:part0:3.1
+-} else {
+-  puts "Board $BOARD not supported"
+-  exit
+-}
+-
+ ##### Caliptra Package #####
+ source create_caliptra_package.tcl
+ ##### Caliptra Package #####
+@@ -155,8 +184,7 @@ connect_bd_net \
+   [get_bd_pins proc_sys_reset_0/slowest_sync_clk] \
+   [get_bd_pins axi_interconnect_0/aclk] \
+   [get_bd_pins caliptra_package_top_0/core_clk] \
+-  [get_bd_pins cptra_rom_backdoor_bram_0/s_axi_aclk] \
+-  [get_bd_pins caliptra_ss_package_0/core_clk]
++  [get_bd_pins cptra_rom_backdoor_bram_0/s_axi_aclk]
+ 
+ ### Connect BRAM controllers to FPGA wrapper ###
+ connect_bd_intf_net [get_bd_intf_pins caliptra_package_top_0/rom_backdoor] [get_bd_intf_pins cptra_rom_backdoor_bram_0/BRAM_PORTA]
+@@ -193,9 +221,26 @@ update_compile_order -fileset sources_1
+ create_ip_run [get_files caliptra_fpga_project_bd.bd]
+ set_property STEPS.SYNTH_DESIGN.ARGS.GATED_CLOCK_CONVERSION $GATED_CLOCK_CONVERSION [get_runs caliptra_fpga_project_bd_caliptra_package_top_0_0_synth_1]
+ 
++# Synthesis runs start separate Vivado processes, so limit their threads with a
++# pre-hook rather than only setting general.maxThreads in this parent session.
++# IS_SYNTHESIS includes both the IP out-of-context runs and the top-level synth_1.
++set synthesis_runs [get_runs -filter {IS_SYNTHESIS}]
++foreach synthesis_run $synthesis_runs {
++  if {[get_property STEPS.SYNTH_DESIGN.TCL.PRE $synthesis_run] ne ""} {
++    error "Synthesis run $synthesis_run already has a pre-hook; refusing to replace it"
++  }
++}
++set synthesis_threads_hook [file normalize [file join $outputDir synthesis_threads.tcl]]
++set synthesis_threads_fd [open $synthesis_threads_hook w]
++puts $synthesis_threads_fd [list set_param general.maxThreads $THREADS]
++close $synthesis_threads_fd
++add_files -fileset utils_1 -norecurse $synthesis_threads_hook
++set_property STEPS.SYNTH_DESIGN.TCL.PRE $synthesis_threads_hook $synthesis_runs
++
+ # Add DDR pin placement constraints
+ file copy $fpgaDir/src/ddr4_constraints.xdc $outputDir/ddr4_constraints.xdc
+ add_files -fileset constrs_1 $outputDir/ddr4_constraints.xdc
++set_property USED_IN_SYNTHESIS false [get_files $outputDir/ddr4_constraints.xdc]
+ 
+ # Set initial boot property to make the NOC connections part of the boot PDI.
+ if {$SEGMENTED} {
+@@ -210,12 +255,12 @@ if {$SEGMENTED} {
+ # Start build
+ if {$BUILD} {
+   set time_start_synth [clock clicks -millisec]
+-  launch_runs synth_1 -jobs 32
++  launch_runs synth_1 -jobs $JOBS
+   wait_on_runs synth_1
+   set time_finish_synth [clock clicks -millisec]
+ 
+   set time_start_impl [clock clicks -millisec]
+-  launch_runs impl_1 -to_step write_device_image -jobs 32
++  launch_runs impl_1 -to_step write_device_image -jobs $JOBS
+   wait_on_runs impl_1
+   set time_finish_impl [clock clicks -millisec]
+ 
+diff --git a/hw/fpga/src/ddr4_constraints.xdc b/hw/fpga/src/ddr4_constraints.xdc
+index 07c5a916..1fce3bca 100644
+--- a/hw/fpga/src/ddr4_constraints.xdc
++++ b/hw/fpga/src/ddr4_constraints.xdc
+@@ -1,4 +1,4 @@
+-set_property PACKAGE_PIN AR47 [get_ports {ddr4_dimm1_act_n[0]}]
++set_property PACKAGE_PIN AR47 [get_ports -quiet {ddr4_dimm1_act_n ddr4_dimm1_act_n[0]}]
+ set_property PACKAGE_PIN AL46 [get_ports {ddr4_dimm1_adr[0]}]
+ set_property PACKAGE_PIN AL42 [get_ports {ddr4_dimm1_adr[10]}]
+ set_property PACKAGE_PIN AK38 [get_ports {ddr4_dimm1_adr[11]}]
+@@ -20,10 +20,10 @@ set_property PACKAGE_PIN AN43 [get_ports {ddr4_dimm1_ba[0]}]
+ set_property PACKAGE_PIN AL47 [get_ports {ddr4_dimm1_ba[1]}]
+ set_property PACKAGE_PIN AP42 [get_ports {ddr4_dimm1_bg[0]}]
+ set_property PACKAGE_PIN AT47 [get_ports {ddr4_dimm1_bg[1]}]
+-set_property PACKAGE_PIN AR46 [get_ports {ddr4_dimm1_ck_t[0]}]
+-set_property PACKAGE_PIN AT46 [get_ports {ddr4_dimm1_ck_c[0]}]
+-set_property PACKAGE_PIN AR45 [get_ports {ddr4_dimm1_cke[0]}]
+-set_property PACKAGE_PIN AL43 [get_ports {ddr4_dimm1_cs_n[0]}]
++set_property PACKAGE_PIN AR46 [get_ports -quiet {ddr4_dimm1_ck_t ddr4_dimm1_ck_t[0]}]
++set_property PACKAGE_PIN AT46 [get_ports -quiet {ddr4_dimm1_ck_c ddr4_dimm1_ck_c[0]}]
++set_property PACKAGE_PIN AR45 [get_ports -quiet {ddr4_dimm1_cke ddr4_dimm1_cke[0]}]
++set_property PACKAGE_PIN AL43 [get_ports -quiet {ddr4_dimm1_cs_n ddr4_dimm1_cs_n[0]}]
+ set_property PACKAGE_PIN BC41 [get_ports {ddr4_dimm1_dm_n[0]}]
+ set_property PACKAGE_PIN BB43 [get_ports {ddr4_dimm1_dm_n[1]}]
+ set_property PACKAGE_PIN BB44 [get_ports {ddr4_dimm1_dm_n[2]}]
+@@ -112,7 +112,7 @@ set_property PACKAGE_PIN AF39 [get_ports {ddr4_dimm1_dqs_t[6]}]
+ set_property PACKAGE_PIN AF40 [get_ports {ddr4_dimm1_dqs_c[6]}]
+ set_property PACKAGE_PIN AE38 [get_ports {ddr4_dimm1_dqs_t[7]}]
+ set_property PACKAGE_PIN AF37 [get_ports {ddr4_dimm1_dqs_c[7]}]
+-set_property PACKAGE_PIN AM39 [get_ports {ddr4_dimm1_odt[0]}]
+-set_property PACKAGE_PIN AD42 [get_ports {ddr4_dimm1_reset_n[0]}]
+-set_property PACKAGE_PIN AE42 [get_ports {ddr4_dimm1_sma_clk_clk_p[0]}]
+-set_property PACKAGE_PIN AF43 [get_ports {ddr4_dimm1_sma_clk_clk_n[0]}]
++set_property PACKAGE_PIN AM39 [get_ports -quiet {ddr4_dimm1_odt ddr4_dimm1_odt[0]}]
++set_property PACKAGE_PIN AD42 [get_ports -quiet {ddr4_dimm1_reset_n ddr4_dimm1_reset_n[0]}]
++set_property PACKAGE_PIN AE42 [get_ports -quiet {ddr4_dimm1_sma_clk_clk_p ddr4_dimm1_sma_clk_clk_p[0]}]
++set_property PACKAGE_PIN AF43 [get_ports -quiet {ddr4_dimm1_sma_clk_clk_n ddr4_dimm1_sma_clk_clk_n[0]}]

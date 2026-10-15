@@ -1,0 +1,4 @@
+[submodule "upstream/caliptra-sw"]
+	path = upstream/caliptra-sw
+	url = https://github.com/chipsalliance/caliptra-sw.git
+	shallow = true

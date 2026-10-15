@@ -1,0 +1,12 @@
+Caliptra VCK190 infrastructure
+
+The Caliptra FPGA patch modifies Apache-2.0-licensed sources from
+https://github.com/chipsalliance/caliptra-sw at the revision in versions.env.
+Upstream copyright notices and licenses remain applicable.
+
+The device-tree settings were checked against AMD's 2024.2 board descriptions:
+https://github.com/Xilinx/device-tree-xlnx/blob/xlnx_rel_v2024.2/device_tree/data/kernel_dtsi/2024.2/BOARD/versal-vmk180-reva.dtsi
+VCK190 rev1.1 includes VMK180 rev1.1, which includes that board description.
+
+New infrastructure scripts and documentation are licensed under Apache-2.0.
+External repositories and binary/tool distributions retain their own licenses.
