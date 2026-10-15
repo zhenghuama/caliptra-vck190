@@ -11,6 +11,7 @@ The targeted physical FPGA smoke test passed on 2026-10-15 UTC: **1 passed,
 
 ## Start here
 
+- [Run `make smoke-casa` from the workstation](docs/smoke-casa.md)
 - [Access the board, understand the architecture, and run the test](docs/usage.md)
 - [Set up a board from the Ubuntu and Caliptra images](docs/setup.md)
 - [Transfer updates to the board without Internet access](docs/offline-workflow.md)
@@ -46,6 +47,10 @@ Private projects can later be added as optional submodules. The public bring-up
 flow should continue to work without access to those projects.
 
 ## Reproduction scope
+
+`make smoke-casa` stages source, executes the offline smoke test on the board,
+and returns logs and timing to casa. It uses the existing FPGA image; it does
+not rebuild or deploy hardware images.
 
 The existing hardware image and newly packaged launcher passed the physical
 test: 1 passed, 0 failed in 116.71 seconds, exit 0. The source bootstrap also ran

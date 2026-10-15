@@ -28,7 +28,13 @@ done
 # Separate Unix accounts still need to coordinate exclusive use of the board.
 lockdir=${XDG_CACHE_HOME:-"$HOME/.cache"}/caliptra-vck190
 mkdir -p -- "$logdir" "$lockdir" || exit 2
-exec 9>"$lockdir/uio$uio.lock"
+if [[ -n "${CALIPTRA_LOCK_FD:-}" ]]; then
+    [[ "$CALIPTRA_LOCK_FD" =~ ^[0-9]+$ ]] || { echo 'Invalid inherited lock descriptor.' >&2; exit 2; }
+    exec 9>&"$CALIPTRA_LOCK_FD" || exit 2
+    [[ "$(readlink /proc/$$/fd/9)" == "$lockdir/uio$uio.lock" ]] || { echo 'Unexpected inherited lock file.' >&2; exit 2; }
+else
+    exec 9>"$lockdir/uio$uio.lock"
+fi
 flock -n 9 || { echo 'Another smoke launcher holds the board lock.' >&2; exit 2; }
 export CPTRA_UIO_NUM="$uio" CARGO_BUILD_JOBS=2 CARGO_INCREMENTAL=0
 export CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0

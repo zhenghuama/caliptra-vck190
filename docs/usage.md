@@ -31,6 +31,11 @@ Git metadata. Use a fresh checkout prepared by this repo for source development.
 
 ## 2. Access and smoke test
 
+For normal use from casa, run `make smoke-casa` in the infrastructure repo.
+It handles source transfer, board execution, and result retrieval; see
+[the one-command guide](smoke-casa.md). The commands below are also available
+for direct/manual board use.
+
 Obtain the workstation SSH hostname/account and board password from the lab
 maintainer. They are intentionally not stored in this public repository. The
 documented direct-link example uses workstation `192.168.77.1` and board

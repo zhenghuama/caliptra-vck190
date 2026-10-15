@@ -15,6 +15,10 @@ commands on casa or another Internet-connected development workstation.
 
 ## Recommended daily workflow
 
+The source-sync/test/result-collection steps are available as
+[`make smoke-casa`](smoke-casa.md). Run it on casa against the prepared source
+checkout; the details below describe the division of responsibilities.
+
 Use casa as the development, deployment, and results host. Keep the VCK190
 offline on its private Ethernet link. No NAT, network bridge, Internet sharing,
 or changes to the workstation's authenticated external network are needed.
@@ -99,9 +103,10 @@ The smoke test is a functional check. Its reported duration can include firmware
 building and several hardware boot/test combinations; it is not a standalone
 Caliptra performance benchmark. The 116.71-second verification was measured by
 the test running on the VCK190, with host-test compilation reported separately.
-Benchmark instrumentation and automated versioned deployment are future work;
-the current repo provides source preparation, the board-side smoke launcher,
-and the manual transfer workflow.
+Benchmark instrumentation and FPGA-image deployment automation are future work.
+The current `make smoke-casa` workflow automates source snapshots, reserved
+source syncing, board-side smoke execution, and result collection. Its source
+mirror and build cache are reused; exact run snapshots are retained on casa.
 
 ## Optional: keep the infrastructure Git history on the offline board
 
